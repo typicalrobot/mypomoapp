@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Updated to use Poppins font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Enhanced Pomodoro Timer</title>
+    <style>
+        :root {
+            /* Light mode colors */
+            --rosewater: #e8b4b8;
+            --dusty-rose: #eed6d3;
+            --coffee-pot-light: #a49393;
+            --coffee-pot-dark: #67595e;
+            --bg-primary: var(--dusty-rose);
+            --bg-secondary: var(--rosewater);
+            --text-primary: var(--coffee-pot-dark);
+            --text-secondary: var(--coffee-pot-light);
+            --accent: var(--rosewater);
+        }
+
+        [data-theme="dark"] {
+            /* Dark mode colors */
+            --bg-primary: var(--coffee-pot-dark);
+            --bg-secondary: var(--coffee-pot-light);
+            --text-primary: var(--dusty-rose);
+            --text-secondary: var(--rosewater);
+            --accent: var(--rosewater);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            padding: 20px;
+        }
+
+        .app-container {
+            text-align: center;
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--accent);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 24px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: var(--accent);
+            color: var(--text-primary);
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: 500;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .notification.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .timer-modes {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 12px 24px;
+            border: 2px solid var(--accent);
+            background: transparent;
+            color: var(--text-primary);
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn:hover,
+        .mode-btn.active {
+            background: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .timer-display {
+            font-size: 4rem;
+            font-weight: 700;
+            margin: 2rem 0;
+            color: var(--text-primary);
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            background: var(--accent);
+            color: var(--text-primary);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .todo-section {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 20px;
+            margin-top: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .todo-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .todo-input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .todo-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-primary);
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+        }
+
+        .todo-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .add-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: var(--accent);
+            color: var(--text-primary);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .todo-list {
+            list-style: none;
+            margin-bottom: 1rem;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .todo-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+
+        .todo-text {
+            flex: 1;
+            text-align: left;
+            margin-left: 10px;
+        }
+
+        .todo-checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            cursor: pointer;
+        }
+
+        .todo-checkbox.checked {
+            background: var(--accent);
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+        }
+
+        .todo-counter {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .timer-display {
+                font-size: 3rem;
+            }
+
+            .timer-modes {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .mode-btn {
+                width: 200px;
+            }
+
+            .timer-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 200px;
+            }
+
+            .todo-section {
+                padding: 1.5rem;
+            }
+
+            .todo-input-container {
+                flex-direction: column;
+            }
+
+            .add-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .timer-display {
+                font-size: 2.5rem;
+            }
+
+            .todo-section {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Added theme toggle button -->
+    <div class="app-container">
+        <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        
+        <!-- Removed status messages -->
+        <h1>Pomodoro Timer</h1>
+        
+        <!-- Added notification container -->
+        <div id="notification" class="notification"></div>
+        
+        <div class="timer-modes">
+            <button class="mode-btn active" data-mode="work" data-time="25">Work</button>
+            <button class="mode-btn" data-mode="short" data-time="5">Short Break</button>
+            <button class="mode-btn" data-mode="long" data-time="15">Long Break</button>
+        </div>
+        
+        <!-- Removed circle container, simplified timer display -->
+        <div class="timer-display" id="timer-display">25:00</div>
+        
+        <div class="timer-controls">
+            <button class="btn" id="start-btn">Start</button>
+            <button class="btn" id="reset-btn">Reset</button>
+        </div>
+        
+        <div class="todo-section">
+            <!-- Changed title to "Focus items" -->
+            <h2>Focus items</h2>
+            <div class="todo-input-container">
+                <input type="text" class="todo-input" id="todo-input" placeholder="Add a task..." maxlength="50">
+                <button class="add-btn" id="add-todo">Add</button>
+            </div>
+            <ul class="todo-list" id="todo-list"></ul>
+            <div class="todo-counter">
+                <span id="todo-count">0</span>/5 tasks
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Timer state
+        let currentMode = 'work';
+        let timeLeft = 25 * 60; // 25 minutes in seconds
+        let isRunning = false;
+        let isPaused = false;
+        let timerInterval;
+        
+        // Todo state
+        let todos = [];
+        const maxTodos = 5;
+        
+        // Theme state
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+        
+        // Audio
+        const audio = new Audio('mixkit-achievement-bell-600.wav');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDisplay();
+            updateTodoDisplay();
+            applyTheme();
+            
+            // Event listeners
+            document.getElementById('start-btn').addEventListener('click', toggleTimer);
+            document.getElementById('reset-btn').addEventListener('click', resetTimer);
+            document.getElementById('add-todo').addEventListener('click', addTodo);
+            document.getElementById('todo-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addTodo();
+            });
+            
+            // Mode buttons
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (!isRunning) {
+                        switchMode(this.dataset.mode, parseInt(this.dataset.time));
+                    }
+                });
+            });
+        });
+        
+        function toggleTimer() {
+            if (isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+        
+        function startTimer() {
+            isRunning = true;
+            isPaused = false;
+            document.getElementById('start-btn').textContent = 'Pause';
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+                
+                if (timeLeft <= 0) {
+                    completeSession();
+                }
+            }, 1000);
+        }
+        
+        function pauseTimer() {
+            isRunning = false;
+            isPaused = true;
+            document.getElementById('start-btn').textContent = 'Resume';
+            clearInterval(timerInterval);
+        }
+        
+        function resetTimer() {
+            isRunning = false;
+            isPaused = false;
+            clearInterval(timerInterval);
+            
+            const activeBtn = document.querySelector('.mode-btn.active');
+            timeLeft = parseInt(activeBtn.dataset.time) * 60;
+            
+            document.getElementById('start-btn').textContent = 'Start';
+            updateDisplay();
+        }
+        
+        function completeSession() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('start-btn').textContent = 'Start';
+            
+            audio.play().catch(e => console.log('Audio play failed:', e));
+            
+            let message;
+            if (currentMode === 'work') {
+                message = 'End';
+            } else if (currentMode === 'short') {
+                message = 'End of Short Break';
+            } else {
+                message = 'End of Long Break';
+            }
+            showNotification(message);
+            
+            // Auto-switch to next mode
+            autoSwitchMode();
+        }
+        
+        function autoSwitchMode() {
+            let nextMode, nextTime;
+            
+            if (currentMode === 'work') {
+                // After work, go to short break
+                nextMode = 'short';
+                nextTime = 5;
+            } else {
+                // After any break, go back to work
+                nextMode = 'work';
+                nextTime = 25;
+            }
+            
+            switchMode(nextMode, nextTime);
+        }
+        
+        function switchMode(mode, minutes) {
+            currentMode = mode;
+            timeLeft = minutes * 60;
+            
+            // Update active button
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.mode === mode) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            updateDisplay();
+        }
+        
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer-display').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function addTodo() {
+            const input = document.getElementById('todo-input');
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            if (todos.length >= maxTodos) {
+                showNotification(`Maximum ${maxTodos} tasks allowed. Complete some tasks first!`);
+                return;
+            }
+            
+            todos.push({
+                id: Date.now(),
+                text: text,
+                completed: false
+            });
+            
+            input.value = '';
+            updateTodoDisplay();
+        }
+        
+        function toggleTodo(id) {
+            const todo = todos.find(t => t.id === id);
+            if (todo) {
+                todo.completed = !todo.completed;
+                if (todo.completed) {
+                    showNotification('All Tasks Completed');
+                }
+                updateTodoDisplay();
+            }
+        }
+        
+        function deleteTodo(id) {
+            todos = todos.filter(t => t.id !== id);
+            updateTodoDisplay();
+        }
+        
+        function updateTodoDisplay() {
+            const todoList = document.getElementById('todo-list');
+            const todoCount = document.getElementById('todo-count');
+            
+            todoList.innerHTML = '';
+            
+            todos.forEach(todo => {
+                const li = document.createElement('li');
+                li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+                li.innerHTML = `
+                    <div class="todo-checkbox ${todo.completed ? 'checked' : ''}" 
+                         onclick="toggleTodo(${todo.id})"></div>
+                    <span class="todo-text">${todo.text}</span>
+                    <button class="delete-btn" onclick="deleteTodo(${todo.id})">×</button>
+                `;
+                todoList.appendChild(li);
+            });
+            
+            todoCount.textContent = todos.length;
+        }
+        
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('darkMode', isDarkMode);
+            applyTheme();
+        }
+        
+        function applyTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (isDarkMode) {
+                body.setAttribute('data-theme', 'dark');
+                themeToggle.textContent = '☀️';
+            } else {
+                body.removeAttribute('data-theme');
+                themeToggle.textContent = '🌙';
+            }
+        }
+    </script>
+</body>
+</html>
